@@ -1,3 +1,10 @@
+## 0.2.0
+
+- `TableContextualBar` — toolbar container that swaps between a custom normal toolbar and a contextual action bar based on selection state
+  - Uses `Stack` + `AnimatedOpacity` for zero-shift crossfade (no layout jump)
+  - Fully customizable `normalToolbar` slot, `selectAllWidget`, and trailing `actions`
+- Updated playground: new "Context Bar" tab, Full Demo now uses `TableContextualBar`
+
 ## 0.1.0
 
 - Initial release

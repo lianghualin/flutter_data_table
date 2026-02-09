@@ -10,6 +10,7 @@ A highly customizable, composable data table widget for Flutter. Built with a mo
 - **TableFilterToolbar** — Two-row filter toolbar with main filters, advanced collapsible filters, search, dropdowns, date range pickers, and date presets
 - **TablePagination** — Pagination controls with page size dropdown, page number buttons, and customizable text templates
 - **TableSelectionBar** — Animated selection action bar with select all / clear selection controls
+- **TableContextualBar** — Toolbar that swaps between a custom normal toolbar and a contextual action bar on selection, with zero-shift opacity animation
 - **StatusBadge** — Pill-shaped badge with 5 semantic factories (success, warning, danger, info, neutral)
 - **CountBadge** — Small numeric badge for counts and notifications
 - **DataTablePlusTheme** — Full theming system via `InheritedWidget`, with `copyWith` support and 20+ customizable properties
@@ -214,6 +215,46 @@ TableSelectionBar(
 )
 ```
 
+### Contextual Action Bar
+
+```dart
+TableContextualBar(
+  selectedCount: _selectedIds.length,
+
+  // State 1: your custom toolbar (shown when nothing selected)
+  normalToolbar: Row(
+    children: [
+      FilledButton.icon(
+        onPressed: _addItem,
+        icon: const Icon(Icons.add),
+        label: const Text('Add User'),
+      ),
+      const Spacer(),
+      SearchField(onChanged: _onSearch),
+    ],
+  ),
+
+  // State 2: contextual bar (shown when selectedCount > 0)
+  selectedCountTemplate: '{count} selected',
+  selectAllWidget: OutlinedButton(
+    onPressed: _toggleSelectAll,
+    child: Text('Select All (${items.length})'),
+  ),
+  actions: [
+    OutlinedButton.icon(
+      onPressed: _clearSelection,
+      icon: const Icon(Icons.close),
+      label: const Text('Cancel'),
+    ),
+    FilledButton.icon(
+      onPressed: _deleteSelected,
+      icon: const Icon(Icons.delete),
+      label: Text('Delete (${_selectedIds.length})'),
+    ),
+  ],
+)
+```
+
 ### Status Badges
 
 ```dart
@@ -277,6 +318,7 @@ DataTablePlusTheme.defaultTheme.copyWith(
 | `TextCellBuilder` | Predefined cell builders: `.text()`, `.monospace()` |
 | `TablePagination` | Page controls with size selector and range display |
 | `TableSelectionBar` | Animated selection bar with select all / clear |
+| `TableContextualBar` | Toolbar ↔ contextual action bar swap on selection |
 | `TableFilterToolbar` | Two-row filter layout with advanced collapse |
 | `FilterSearchField` | Styled search input |
 | `FilterDropdown<T>` | Styled dropdown selector |
@@ -292,14 +334,15 @@ DataTablePlusTheme.defaultTheme.copyWith(
 
 ## Example
 
-The `example/` directory contains a full playground app with 6 tabs demonstrating every feature:
+The `example/` directory contains a full playground app with 7 tabs demonstrating every feature:
 
-1. **Full Demo** — Complete user management table with filters, pagination, selection, and badges
+1. **Full Demo** — Complete user management table with contextual bar, filters, pagination, selection, and badges
 2. **Table Options** — Interactive toggles to explore all DataTablePlus properties
 3. **Badges** — All StatusBadge variants and CountBadge
 4. **Filters** — Every filter widget individually and as a complete toolbar
 5. **Pagination** — Adjustable pagination with all options
 6. **Selection Bar** — Configurable selection bar with sliders
+7. **Context Bar** — Interactive toolbar ↔ contextual action bar demo with delete and select all
 
 Run the example:
 

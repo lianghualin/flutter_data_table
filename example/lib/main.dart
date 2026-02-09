@@ -257,7 +257,7 @@ class _PlaygroundPageState extends State<PlaygroundPage>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 6, vsync: this);
+    _tabController = TabController(length: 7, vsync: this);
   }
 
   @override
@@ -319,6 +319,7 @@ class _PlaygroundPageState extends State<PlaygroundPage>
             Tab(text: 'Filters'),
             Tab(text: 'Pagination'),
             Tab(text: 'Selection'),
+            Tab(text: 'Context Bar'),
           ],
         ),
       ),
@@ -331,6 +332,7 @@ class _PlaygroundPageState extends State<PlaygroundPage>
           FiltersTab(theme: _theme, isDark: _isDark),
           PaginationTab(theme: _theme, isDark: _isDark),
           SelectionBarTab(theme: _theme, isDark: _isDark),
+          ContextBarTab(theme: _theme, isDark: _isDark),
         ],
       ),
     );
@@ -608,15 +610,84 @@ class _FullDemoTabState extends State<FullDemoTab>
         child: Column(
           children: [
             _buildStatsBar(),
-            _buildToolbar(),
             DataTablePlusThemeProvider(
               theme: widget.theme,
-              child: TableSelectionBar(
+              child: TableContextualBar(
                 selectedCount: _selectedIds.length,
-                pageItemCount: _paginatedUsers.length,
-                allPageSelected: _allSelected,
-                onSelectAllPage: _toggleSelectAll,
-                onClearSelection: _clearSelection,
+                normalToolbar: _buildToolbar(),
+                selectedCountTemplate: '{count} selected',
+                selectAllWidget: OutlinedButton(
+                  onPressed: _toggleSelectAll,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: widget.theme.accentColor,
+                    side: BorderSide(
+                      color: widget.theme.accentColor.withValues(alpha: 0.4),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
+                    minimumSize: const Size(0, 36),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: Text(
+                    _allSelected
+                        ? 'Deselect All'
+                        : 'Select All (${_paginatedUsers.length})',
+                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                  ),
+                ),
+                actions: [
+                  OutlinedButton.icon(
+                    onPressed: _clearSelection,
+                    icon: Icon(
+                      Icons.close,
+                      size: 16,
+                      color: widget.theme.textSecondaryColor,
+                    ),
+                    label: Text(
+                      'Clear',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: widget.theme.textSecondaryColor,
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size(0, 36),
+                      side: BorderSide(color: widget.theme.borderColor),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 10,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  FilledButton.icon(
+                    onPressed: () {
+                      // Demo: just clear selection
+                      _clearSelection();
+                    },
+                    icon: const Icon(Icons.delete_outline, size: 16),
+                    label: Text('Delete (${_selectedIds.length})'),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: widget.theme.dangerColor,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 18,
+                        vertical: 10,
+                      ),
+                      minimumSize: const Size(0, 36),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
             Expanded(
@@ -739,156 +810,153 @@ class _FullDemoTabState extends State<FullDemoTab>
     final advancedFilterCount =
         (_roleFilter != null ? 1 : 0) + (_departmentFilter != null ? 1 : 0);
 
-    return DataTablePlusThemeProvider(
-      theme: widget.theme,
-      child: TableFilterToolbar(
-        mainFilters: [
-          FilterSearchField(
-            hint: 'Search by name, email, ID...',
-            onChanged: (value) {
-              setState(() {
-                _searchQuery = value;
-                _applyFilters();
-              });
-            },
-          ),
-          FilterDropdown<UserStatus?>(
-            value: _statusFilter,
-            hint: 'All Status',
-            items: [
-              const DropdownMenuItem(value: null, child: Text('All Status')),
-              ...UserStatus.values.map(
-                (s) => DropdownMenuItem(
-                  value: s,
-                  child: Text(
-                    s.name[0].toUpperCase() + s.name.substring(1),
-                  ),
-                ),
-              ),
-            ],
-            onChanged: (value) {
-              setState(() {
-                _statusFilter = value;
-                _applyFilters();
-              });
-            },
-          ),
-          FilterDateRangePicker(
-            label: 'Created',
-            fromDate: _createdFromDate,
-            toDate: _createdToDate,
-            onFromDateChanged: (date) {
-              setState(() {
-                _createdFromDate = date;
-                _applyFilters();
-              });
-            },
-            onToDateChanged: (date) {
-              setState(() {
-                _createdToDate = date;
-                _applyFilters();
-              });
-            },
-          ),
-          FilterDateRangePicker(
-            label: 'Last Login',
-            fromDate: _lastLoginFromDate,
-            toDate: _lastLoginToDate,
-            onFromDateChanged: (date) {
-              setState(() {
-                _lastLoginFromDate = date;
-                _applyFilters();
-              });
-            },
-            onToDateChanged: (date) {
-              setState(() {
-                _lastLoginToDate = date;
-                _applyFilters();
-              });
-            },
-          ),
-        ],
-        trailingActions: [
-          FilterResetButton(
-            onReset: () {
-              setState(() {
-                _searchQuery = '';
-                _statusFilter = null;
-                _roleFilter = null;
-                _departmentFilter = null;
-                _createdFromDate = null;
-                _createdToDate = null;
-                _lastLoginFromDate = null;
-                _lastLoginToDate = null;
-                _showAdvancedFilters = false;
-                _applyFilters();
-              });
-            },
-          ),
-        ],
-        fixedEndAction: FilterAdvancedToggle(
-          isExpanded: _showAdvancedFilters,
-          activeFilterCount: advancedFilterCount,
-          onToggle: () =>
-              setState(() => _showAdvancedFilters = !_showAdvancedFilters),
+    return TableFilterToolbar(
+      mainFilters: [
+        FilterSearchField(
+          hint: 'Search by name, email, ID...',
+          onChanged: (value) {
+            setState(() {
+              _searchQuery = value;
+              _applyFilters();
+            });
+          },
         ),
-        showAdvancedFilters: _showAdvancedFilters,
-        advancedFilters: [
-          FilterDropdown<UserRole?>(
-            value: _roleFilter,
-            hint: 'All Roles',
-            items: [
-              const DropdownMenuItem(value: null, child: Text('All Roles')),
-              ...UserRole.values.map(
-                (r) => DropdownMenuItem(
-                  value: r,
-                  child: Text(
-                    r.name[0].toUpperCase() + r.name.substring(1),
-                  ),
+        FilterDropdown<UserStatus?>(
+          value: _statusFilter,
+          hint: 'All Status',
+          items: [
+            const DropdownMenuItem(value: null, child: Text('All Status')),
+            ...UserStatus.values.map(
+              (s) => DropdownMenuItem(
+                value: s,
+                child: Text(
+                  s.name[0].toUpperCase() + s.name.substring(1),
                 ),
               ),
-            ],
-            onChanged: (value) {
-              setState(() {
-                _roleFilter = value;
-                _applyFilters();
-              });
-            },
-          ),
-          FilterDropdown<String?>(
-            value: _departmentFilter,
-            hint: 'All Departments',
-            items: [
-              const DropdownMenuItem(
-                value: null,
-                child: Text('All Departments'),
-              ),
-              ...[
-                'Engineering', 'Marketing', 'Sales', 'Finance', 'HR',
-                'Operations', 'Product', 'Design', 'Legal', 'Support',
-                'Research', 'IT',
-              ].map((d) => DropdownMenuItem(value: d, child: Text(d))),
-            ],
-            onChanged: (value) {
-              setState(() {
-                _departmentFilter = value;
-                _applyFilters();
-              });
-            },
-          ),
-        ],
-        advancedFiltersTrailing: hasAdvancedFilters
-            ? FilterClearButton(
-                onClear: () {
-                  setState(() {
-                    _roleFilter = null;
-                    _departmentFilter = null;
-                    _applyFilters();
-                  });
-                },
-              )
-            : null,
+            ),
+          ],
+          onChanged: (value) {
+            setState(() {
+              _statusFilter = value;
+              _applyFilters();
+            });
+          },
+        ),
+        FilterDateRangePicker(
+          label: 'Created',
+          fromDate: _createdFromDate,
+          toDate: _createdToDate,
+          onFromDateChanged: (date) {
+            setState(() {
+              _createdFromDate = date;
+              _applyFilters();
+            });
+          },
+          onToDateChanged: (date) {
+            setState(() {
+              _createdToDate = date;
+              _applyFilters();
+            });
+          },
+        ),
+        FilterDateRangePicker(
+          label: 'Last Login',
+          fromDate: _lastLoginFromDate,
+          toDate: _lastLoginToDate,
+          onFromDateChanged: (date) {
+            setState(() {
+              _lastLoginFromDate = date;
+              _applyFilters();
+            });
+          },
+          onToDateChanged: (date) {
+            setState(() {
+              _lastLoginToDate = date;
+              _applyFilters();
+            });
+          },
+        ),
+      ],
+      trailingActions: [
+        FilterResetButton(
+          onReset: () {
+            setState(() {
+              _searchQuery = '';
+              _statusFilter = null;
+              _roleFilter = null;
+              _departmentFilter = null;
+              _createdFromDate = null;
+              _createdToDate = null;
+              _lastLoginFromDate = null;
+              _lastLoginToDate = null;
+              _showAdvancedFilters = false;
+              _applyFilters();
+            });
+          },
+        ),
+      ],
+      fixedEndAction: FilterAdvancedToggle(
+        isExpanded: _showAdvancedFilters,
+        activeFilterCount: advancedFilterCount,
+        onToggle: () =>
+            setState(() => _showAdvancedFilters = !_showAdvancedFilters),
       ),
+      showAdvancedFilters: _showAdvancedFilters,
+      advancedFilters: [
+        FilterDropdown<UserRole?>(
+          value: _roleFilter,
+          hint: 'All Roles',
+          items: [
+            const DropdownMenuItem(value: null, child: Text('All Roles')),
+            ...UserRole.values.map(
+              (r) => DropdownMenuItem(
+                value: r,
+                child: Text(
+                  r.name[0].toUpperCase() + r.name.substring(1),
+                ),
+              ),
+            ),
+          ],
+          onChanged: (value) {
+            setState(() {
+              _roleFilter = value;
+              _applyFilters();
+            });
+          },
+        ),
+        FilterDropdown<String?>(
+          value: _departmentFilter,
+          hint: 'All Departments',
+          items: [
+            const DropdownMenuItem(
+              value: null,
+              child: Text('All Departments'),
+            ),
+            ...[
+              'Engineering', 'Marketing', 'Sales', 'Finance', 'HR',
+              'Operations', 'Product', 'Design', 'Legal', 'Support',
+              'Research', 'IT',
+            ].map((d) => DropdownMenuItem(value: d, child: Text(d))),
+          ],
+          onChanged: (value) {
+            setState(() {
+              _departmentFilter = value;
+              _applyFilters();
+            });
+          },
+        ),
+      ],
+      advancedFiltersTrailing: hasAdvancedFilters
+          ? FilterClearButton(
+              onClear: () {
+                setState(() {
+                  _roleFilter = null;
+                  _departmentFilter = null;
+                  _applyFilters();
+                });
+              },
+            )
+          : null,
     );
   }
 
@@ -2365,6 +2433,495 @@ class _SelectionBarTabState extends State<SelectionBarTab>
           ),
         ),
       ],
+    );
+  }
+}
+
+// =============================================================================
+// TAB 7: CONTEXT BAR
+// =============================================================================
+
+class ContextBarTab extends StatefulWidget {
+  final DataTablePlusTheme theme;
+  final bool isDark;
+
+  const ContextBarTab({super.key, required this.theme, required this.isDark});
+
+  @override
+  State<ContextBarTab> createState() => _ContextBarTabState();
+}
+
+class _ContextBarTabState extends State<ContextBarTab>
+    with AutomaticKeepAliveClientMixin {
+  final Set<String> _selectedIds = {};
+  late List<User> _users;
+  String _deleteLog = '';
+
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  void initState() {
+    super.initState();
+    _users = generateUsers(8);
+  }
+
+  bool get _allSelected =>
+      _users.isNotEmpty && _users.every((u) => _selectedIds.contains(u.id));
+
+  void _toggleSelection(String id) {
+    setState(() {
+      if (_selectedIds.contains(id)) {
+        _selectedIds.remove(id);
+      } else {
+        _selectedIds.add(id);
+      }
+    });
+  }
+
+  void _toggleSelectAll() {
+    setState(() {
+      if (_allSelected) {
+        _selectedIds.clear();
+      } else {
+        for (final u in _users) {
+          _selectedIds.add(u.id);
+        }
+      }
+    });
+  }
+
+  void _deleteSelected() {
+    final count = _selectedIds.length;
+    setState(() {
+      _users.removeWhere((u) => _selectedIds.contains(u.id));
+      _deleteLog = 'Deleted $count item(s). ${_users.length} remaining.';
+      _selectedIds.clear();
+    });
+  }
+
+  void _resetData() {
+    setState(() {
+      _users = generateUsers(8);
+      _selectedIds.clear();
+      _deleteLog = 'Data reset to 8 users.';
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: DataTablePlusThemeProvider(
+        theme: widget.theme,
+        child: Column(
+          children: [
+            // Interactive demo
+            buildSectionCard(
+              title: 'TableContextualBar — Interactive Demo',
+              subtitle:
+                  'Select rows to see the toolbar swap to a contextual action bar',
+              isDark: widget.isDark,
+              child: Column(
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: widget.isDark
+                            ? const Color(0xFF404040)
+                            : Colors.grey[300]!,
+                      ),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Column(
+                        children: [
+                          TableContextualBar(
+                            selectedCount: _selectedIds.length,
+                            normalToolbar: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
+                              decoration: BoxDecoration(
+                                border: Border(
+                                  bottom: BorderSide(
+                                    color: widget.theme.borderLightColor,
+                                  ),
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  FilledButton.icon(
+                                    onPressed: () {},
+                                    icon: const Icon(Icons.add, size: 18),
+                                    label: const Text('Add User'),
+                                    style: FilledButton.styleFrom(
+                                      backgroundColor:
+                                          widget.theme.accentColor,
+                                      foregroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 18,
+                                        vertical: 10,
+                                      ),
+                                      minimumSize: const Size(0, 36),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(8),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  OutlinedButton.icon(
+                                    onPressed: () {},
+                                    icon: const Icon(
+                                      Icons.file_download_outlined,
+                                      size: 18,
+                                    ),
+                                    label: const Text('Export'),
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor:
+                                          widget.theme.textSecondaryColor,
+                                      side: BorderSide(
+                                        color: widget.theme.borderColor,
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 14,
+                                        vertical: 10,
+                                      ),
+                                      minimumSize: const Size(0, 36),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(8),
+                                      ),
+                                    ),
+                                  ),
+                                  const Spacer(),
+                                  SizedBox(
+                                    width: 200,
+                                    child: TextField(
+                                      decoration: InputDecoration(
+                                        hintText: 'Search...',
+                                        prefixIcon: const Icon(
+                                          Icons.search,
+                                          size: 18,
+                                        ),
+                                        isDense: true,
+                                        contentPadding:
+                                            const EdgeInsets.symmetric(
+                                          vertical: 8,
+                                        ),
+                                        border: OutlineInputBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                          borderSide: BorderSide(
+                                            color: widget.theme.borderColor,
+                                          ),
+                                        ),
+                                        enabledBorder: OutlineInputBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                          borderSide: BorderSide(
+                                            color: widget.theme.borderColor,
+                                          ),
+                                        ),
+                                      ),
+                                      style: const TextStyle(fontSize: 13),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            selectAllWidget: OutlinedButton(
+                              onPressed: _toggleSelectAll,
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: widget.theme.accentColor,
+                                side: BorderSide(
+                                  color: widget.theme.accentColor
+                                      .withValues(alpha: 0.4),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 10,
+                                ),
+                                minimumSize: const Size(0, 36),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              child: Text(
+                                _allSelected
+                                    ? 'Deselect All'
+                                    : 'Select All (${_users.length})',
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                            actions: [
+                              OutlinedButton.icon(
+                                onPressed: () =>
+                                    setState(() => _selectedIds.clear()),
+                                icon: Icon(
+                                  Icons.close,
+                                  size: 16,
+                                  color: widget.theme.textSecondaryColor,
+                                ),
+                                label: Text(
+                                  'Cancel',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: widget.theme.textSecondaryColor,
+                                  ),
+                                ),
+                                style: OutlinedButton.styleFrom(
+                                  minimumSize: const Size(0, 36),
+                                  side: BorderSide(
+                                    color: widget.theme.borderColor,
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 10,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              FilledButton.icon(
+                                onPressed: _selectedIds.isNotEmpty
+                                    ? _deleteSelected
+                                    : null,
+                                icon: const Icon(
+                                  Icons.delete_outline,
+                                  size: 16,
+                                ),
+                                label:
+                                    Text('Delete (${_selectedIds.length})'),
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: widget.theme.dangerColor,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 18,
+                                    vertical: 10,
+                                  ),
+                                  minimumSize: const Size(0, 36),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          DataTablePlus<User>(
+                            items: _users,
+                            idGetter: (u) => u.id,
+                            selectedIds: _selectedIds,
+                            allSelected: _allSelected,
+                            showCheckboxes: true,
+                            onSelectionChanged: _toggleSelection,
+                            onSelectAllChanged: _toggleSelectAll,
+                            columns: [
+                              ColumnDefinition<User>(
+                                label: 'ID',
+                                flex: 1,
+                                cellBuilder: TextCellBuilder.monospace<User>(
+                                  (u) => u.id,
+                                ),
+                              ),
+                              ColumnDefinition<User>(
+                                label: 'Name',
+                                flex: 2,
+                                cellBuilder: (u) => Text(
+                                  u.name,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                              ColumnDefinition<User>(
+                                label: 'Email',
+                                flex: 3,
+                                cellBuilder: TextCellBuilder.text<User>(
+                                  (u) => u.email,
+                                ),
+                              ),
+                              ColumnDefinition<User>(
+                                label: 'Status',
+                                flex: 1,
+                                cellBuilder: (u) =>
+                                    buildStatusBadge(u.status),
+                              ),
+                            ],
+                            actionBuilder: (u) => Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.edit_outlined,
+                                    size: 16,
+                                  ),
+                                  onPressed: () {},
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(),
+                                  tooltip: 'Edit',
+                                ),
+                                const SizedBox(width: 8),
+                                IconButton(
+                                  icon: Icon(
+                                    Icons.delete_outline,
+                                    size: 16,
+                                    color: widget.theme.dangerColor,
+                                  ),
+                                  onPressed: () {
+                                    setState(() {
+                                      _users.removeWhere(
+                                        (x) => x.id == u.id,
+                                      );
+                                      _selectedIds.remove(u.id);
+                                      _deleteLog =
+                                          'Deleted ${u.name}. ${_users.length} remaining.';
+                                    });
+                                  },
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(),
+                                  tooltip: 'Delete',
+                                ),
+                              ],
+                            ),
+                            actionLabel: 'Actions',
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  if (_deleteLog.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Text(
+                          _deleteLog,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontFamily: 'monospace',
+                            color: widget.isDark
+                                ? Colors.grey[400]
+                                : Colors.grey[700],
+                          ),
+                        ),
+                        const Spacer(),
+                        TextButton(
+                          onPressed: _resetData,
+                          child: const Text(
+                            'Reset Data',
+                            style: TextStyle(fontSize: 12),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
+            ),
+
+            // How it works
+            buildSectionCard(
+              title: 'How it works',
+              isDark: widget.isDark,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'TableContextualBar swaps between two states with a crossfade animation:',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: widget.isDark ? Colors.white70 : Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  _buildStateCard(
+                    'State 1: Normal Toolbar',
+                    'selectedCount == 0',
+                    'Shows your custom normalToolbar widget (buttons, search, filters, etc.)',
+                    widget.theme.textSecondaryColor,
+                  ),
+                  const SizedBox(height: 8),
+                  _buildStateCard(
+                    'State 2: Contextual Bar',
+                    'selectedCount > 0',
+                    'Shows selection count + selectAllWidget + trailing actions (delete, export, etc.)',
+                    widget.theme.accentColor,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStateCard(
+    String title,
+    String condition,
+    String description,
+    Color color,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Text(
+              condition,
+              style: TextStyle(
+                fontSize: 11,
+                fontFamily: 'monospace',
+                fontWeight: FontWeight.w600,
+                color: color,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: widget.isDark ? Colors.white : Colors.black87,
+                  ),
+                ),
+                Text(
+                  description,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color:
+                        widget.isDark ? Colors.grey[400] : Colors.grey[600],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
