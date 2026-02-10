@@ -237,11 +237,16 @@ class _TableRow<T> extends StatelessWidget {
     return Container(
       padding: theme.cellPadding,
       decoration: BoxDecoration(
-        color: isSelected
-            ? theme.accentLightColor.withValues(alpha: 0.3)
-            : theme.backgroundColor,
+        color: isSelected ? theme.accentLightColor : theme.backgroundColor,
         border: Border(
-          bottom: BorderSide(color: theme.borderLightColor),
+          left: isSelected
+              ? BorderSide(color: theme.accentColor, width: 3)
+              : const BorderSide(color: Colors.transparent, width: 3),
+          bottom: BorderSide(
+            color: isSelected
+                ? theme.accentColor.withValues(alpha: 0.2)
+                : theme.borderLightColor,
+          ),
         ),
       ),
       child: Row(
