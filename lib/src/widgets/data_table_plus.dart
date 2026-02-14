@@ -3,6 +3,11 @@ import '../models/column_definition.dart';
 import '../theme/table_theme.dart';
 
 /// A customizable data table widget with selection, pagination support.
+///
+/// Columns support three sizing modes via [ColumnSize]:
+/// - [ColumnSize.flex] — proportional (default, same as the old `flex` param)
+/// - [ColumnSize.auto] — shrinks to fit the widest cell content
+/// - [ColumnSize.fixed] — exact pixel width
 class DataTablePlus<T> extends StatelessWidget {
   /// The list of items to display.
   final List<T> items;
@@ -68,174 +73,199 @@ class DataTablePlus<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = DataTablePlusThemeProvider.of(context);
-
     final hasDescriptions = columns.any((col) => col.description != null);
+    final showInfoToggle = hasDescriptions && onToggleColumnInfo != null;
 
     return Column(
       children: [
-        // Header
-        _TableHeader<T>(
-          columns: columns,
-          showCheckboxes: showCheckboxes,
-          allSelected: allSelected,
-          onSelectAllChanged: onSelectAllChanged,
-          theme: theme,
-          showActions: actionBuilder != null,
-          actionLabel: actionLabel,
-          actionFlex: actionFlex,
-          showInfoToggle: hasDescriptions && onToggleColumnInfo != null,
-          isInfoExpanded: showColumnInfo,
-          onToggleInfo: onToggleColumnInfo,
+        Table(
+          columnWidths: _columnWidths(showInfoToggle),
+          defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+          children: [
+            _headerRow(theme, showInfoToggle),
+            if (hasDescriptions && showColumnInfo)
+              _infoRow(theme, showInfoToggle),
+            if (items.isNotEmpty)
+              ...items.map((item) => _dataRow(item, theme, showInfoToggle)),
+          ],
         ),
-        // Column info row
-        if (hasDescriptions)
-          _TableColumnInfoRow<T>(
-            columns: columns,
-            showCheckboxes: showCheckboxes,
-            showActions: actionBuilder != null,
-            actionFlex: actionFlex,
-            isVisible: showColumnInfo,
-            theme: theme,
-          ),
-        // Body
-        if (items.isEmpty)
-          emptyWidget ?? _DefaultEmptyWidget(theme: theme)
-        else
-          ...items.map(
-            (item) => _TableRow<T>(
-              item: item,
-              columns: columns,
-              isSelected: selectedIds.contains(idGetter(item)),
-              showCheckboxes: showCheckboxes,
-              onToggle: onSelectionChanged != null
-                  ? () => onSelectionChanged!(idGetter(item))
-                  : null,
-              theme: theme,
-              actionBuilder: actionBuilder,
-              actionFlex: actionFlex,
-            ),
-          ),
+        if (items.isEmpty) emptyWidget ?? _DefaultEmptyWidget(theme: theme),
       ],
     );
   }
-}
 
-class _TableHeader<T> extends StatelessWidget {
-  final List<ColumnDefinition<T>> columns;
-  final bool showCheckboxes;
-  final bool allSelected;
-  final VoidCallback? onSelectAllChanged;
-  final DataTablePlusTheme theme;
-  final bool showActions;
-  final String actionLabel;
-  final int actionFlex;
-  final bool showInfoToggle;
-  final bool isInfoExpanded;
-  final VoidCallback? onToggleInfo;
+  // ---------------------------------------------------------------------------
+  // Column widths
+  // ---------------------------------------------------------------------------
 
-  const _TableHeader({
-    required this.columns,
-    required this.showCheckboxes,
-    required this.allSelected,
-    required this.onSelectAllChanged,
-    required this.theme,
-    required this.showActions,
-    required this.actionLabel,
-    required this.actionFlex,
-    this.showInfoToggle = false,
-    this.isInfoExpanded = false,
-    this.onToggleInfo,
-  });
+  Map<int, TableColumnWidth> _columnWidths(bool showInfoToggle) {
+    final map = <int, TableColumnWidth>{};
+    int i = 0;
 
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: theme.headerPadding,
+    if (showCheckboxes) {
+      map[i++] = const FixedColumnWidth(56);
+    }
+
+    for (final col in columns) {
+      map[i++] = switch (col.size) {
+        ColumnSizeAuto() => const IntrinsicColumnWidth(),
+        ColumnSizeFlex(:final flex) => FlexColumnWidth(flex.toDouble()),
+        ColumnSizeFixed(:final width) => FixedColumnWidth(width),
+      };
+    }
+
+    if (actionBuilder != null) {
+      map[i++] = FlexColumnWidth(actionFlex.toDouble());
+    }
+
+    if (showInfoToggle) {
+      map[i++] = const FixedColumnWidth(44);
+    }
+
+    return map;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Cell padding helper
+  // ---------------------------------------------------------------------------
+
+  /// Wraps [cells] with consistent padding.
+  /// First cell gets left edge padding, last cell gets right edge padding,
+  /// in-between cells get [gap] on their left side.
+  List<Widget> _padCells(
+    List<Widget> cells,
+    EdgeInsets outer, {
+    double gap = 12,
+  }) {
+    return List.generate(cells.length, (i) {
+      return Padding(
+        padding: EdgeInsets.only(
+          left: i == 0 ? outer.left : gap,
+          right: i == cells.length - 1 ? outer.right : 0,
+          top: outer.top,
+          bottom: outer.bottom,
+        ),
+        child: cells[i],
+      );
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Header row
+  // ---------------------------------------------------------------------------
+
+  TableRow _headerRow(DataTablePlusTheme theme, bool showInfoToggle) {
+    final cells = <Widget>[
+      if (showCheckboxes)
+        SizedBox(
+          width: 40,
+          child: Checkbox(
+            value: allSelected,
+            onChanged: onSelectAllChanged != null
+                ? (_) => onSelectAllChanged!()
+                : null,
+            activeColor: theme.accentColor,
+            side: BorderSide(color: theme.borderColor),
+          ),
+        ),
+      ...columns.map((col) => col.headerBuilder != null
+          ? col.headerBuilder!(col.label)
+          : Text(col.label, style: theme.getHeaderTextStyle())),
+      if (actionBuilder != null)
+        Text(actionLabel, style: theme.getHeaderTextStyle()),
+      if (showInfoToggle)
+        SizedBox(
+          width: 28,
+          height: 28,
+          child: IconButton(
+            onPressed: onToggleColumnInfo,
+            padding: EdgeInsets.zero,
+            icon: Icon(
+              showColumnInfo ? Icons.info : Icons.info_outline,
+              size: 18,
+              color: showColumnInfo ? theme.accentColor : theme.textMutedColor,
+            ),
+            tooltip:
+                showColumnInfo ? 'Hide column info' : 'Show column info',
+          ),
+        ),
+    ];
+
+    return TableRow(
       decoration: BoxDecoration(
         color: theme.headerBackgroundColor,
+        border: Border(bottom: BorderSide(color: theme.borderColor)),
+      ),
+      children: _padCells(cells, theme.headerPadding),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Column info row
+  // ---------------------------------------------------------------------------
+
+  TableRow _infoRow(DataTablePlusTheme theme, bool showInfoToggle) {
+    final cells = <Widget>[
+      if (showCheckboxes) const SizedBox.shrink(),
+      ...columns.map((col) => Text(
+            col.description ?? '',
+            style: TextStyle(
+              fontSize: 11,
+              fontStyle: FontStyle.italic,
+              color: theme.textMutedColor,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          )),
+      if (actionBuilder != null) const SizedBox.shrink(),
+      if (showInfoToggle) const SizedBox.shrink(),
+    ];
+
+    return TableRow(
+      decoration: BoxDecoration(
+        color: theme.accentColor.withValues(alpha: 0.05),
         border: Border(
-          bottom: BorderSide(color: theme.borderColor),
+          bottom: BorderSide(
+            color: theme.accentColor.withValues(alpha: 0.15),
+          ),
         ),
       ),
-      child: Row(
-        children: [
-          if (showCheckboxes)
-            SizedBox(
-              width: 40,
-              child: Checkbox(
-                value: allSelected,
-                onChanged: onSelectAllChanged != null
-                    ? (_) => onSelectAllChanged!()
-                    : null,
-                activeColor: theme.accentColor,
-                side: BorderSide(color: theme.borderColor),
-              ),
-            ),
-          ...columns.map(
-            (col) => Expanded(
-              flex: col.flex,
-              child: col.headerBuilder != null
-                  ? col.headerBuilder!(col.label)
-                  : Text(col.label, style: theme.getHeaderTextStyle()),
-            ),
-          ),
-          if (showActions)
-            Expanded(
-              flex: actionFlex,
-              child: Text(actionLabel, style: theme.getHeaderTextStyle()),
-            ),
-          if (showInfoToggle)
-            SizedBox(
-              width: 28,
-              height: 28,
-              child: IconButton(
-                onPressed: onToggleInfo,
-                padding: EdgeInsets.zero,
-                icon: Icon(
-                  isInfoExpanded
-                      ? Icons.info
-                      : Icons.info_outline,
-                  size: 18,
-                  color: isInfoExpanded
-                      ? theme.accentColor
-                      : theme.textMutedColor,
-                ),
-                tooltip: isInfoExpanded
-                    ? 'Hide column info'
-                    : 'Show column info',
-              ),
-            ),
-        ],
+      children: _padCells(
+        cells,
+        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       ),
     );
   }
-}
 
-class _TableRow<T> extends StatelessWidget {
-  final T item;
-  final List<ColumnDefinition<T>> columns;
-  final bool isSelected;
-  final bool showCheckboxes;
-  final VoidCallback? onToggle;
-  final DataTablePlusTheme theme;
-  final Widget Function(T item)? actionBuilder;
-  final int actionFlex;
+  // ---------------------------------------------------------------------------
+  // Data rows
+  // ---------------------------------------------------------------------------
 
-  const _TableRow({
-    required this.item,
-    required this.columns,
-    required this.isSelected,
-    required this.showCheckboxes,
-    required this.onToggle,
-    required this.theme,
-    required this.actionBuilder,
-    required this.actionFlex,
-  });
+  TableRow _dataRow(T item, DataTablePlusTheme theme, bool showInfoToggle) {
+    final isSelected = selectedIds.contains(idGetter(item));
 
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: theme.cellPadding,
+    final cells = <Widget>[
+      if (showCheckboxes)
+        SizedBox(
+          width: 40,
+          child: Checkbox(
+            value: isSelected,
+            onChanged: onSelectionChanged != null
+                ? (_) => onSelectionChanged!(idGetter(item))
+                : null,
+            activeColor: theme.accentColor,
+            side: BorderSide(color: theme.borderColor),
+          ),
+        ),
+      ...columns.map((col) => DefaultTextStyle(
+            style: col.cellStyle ?? theme.getCellTextStyle(),
+            child: col.cellBuilder(item),
+          )),
+      if (actionBuilder != null) actionBuilder!(item),
+      if (showInfoToggle) const SizedBox.shrink(),
+    ];
+
+    return TableRow(
       decoration: BoxDecoration(
         color: isSelected ? theme.accentLightColor : theme.backgroundColor,
         border: Border(
@@ -249,98 +279,14 @@ class _TableRow<T> extends StatelessWidget {
           ),
         ),
       ),
-      child: Row(
-        children: [
-          if (showCheckboxes)
-            SizedBox(
-              width: 40,
-              child: Checkbox(
-                value: isSelected,
-                onChanged: onToggle != null ? (_) => onToggle!() : null,
-                activeColor: theme.accentColor,
-                side: BorderSide(color: theme.borderColor),
-              ),
-            ),
-          ...columns.map(
-            (col) => Expanded(
-              flex: col.flex,
-              child: DefaultTextStyle(
-                style: col.cellStyle ?? theme.getCellTextStyle(),
-                child: col.cellBuilder(item),
-              ),
-            ),
-          ),
-          if (actionBuilder != null)
-            Expanded(
-              flex: actionFlex,
-              child: actionBuilder!(item),
-            ),
-        ],
-      ),
+      children: _padCells(cells, theme.cellPadding),
     );
   }
 }
 
-class _TableColumnInfoRow<T> extends StatelessWidget {
-  final List<ColumnDefinition<T>> columns;
-  final bool showCheckboxes;
-  final bool showActions;
-  final int actionFlex;
-  final bool isVisible;
-  final DataTablePlusTheme theme;
-
-  const _TableColumnInfoRow({
-    required this.columns,
-    required this.showCheckboxes,
-    required this.showActions,
-    required this.actionFlex,
-    required this.isVisible,
-    required this.theme,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedCrossFade(
-      firstChild: const SizedBox.shrink(),
-      secondChild: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: theme.accentColor.withValues(alpha: 0.05),
-          border: Border(
-            bottom: BorderSide(
-              color: theme.accentColor.withValues(alpha: 0.15),
-            ),
-          ),
-        ),
-        child: Row(
-          children: [
-            if (showCheckboxes) const SizedBox(width: 40),
-            ...columns.map(
-              (col) => Expanded(
-                flex: col.flex,
-                child: Text(
-                  col.description ?? '',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontStyle: FontStyle.italic,
-                    color: theme.textMutedColor,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ),
-            if (showActions)
-              Expanded(flex: actionFlex, child: const SizedBox.shrink()),
-          ],
-        ),
-      ),
-      crossFadeState:
-          isVisible ? CrossFadeState.showSecond : CrossFadeState.showFirst,
-      duration: const Duration(milliseconds: 200),
-    );
-  }
-}
+// ---------------------------------------------------------------------------
+// Empty state
+// ---------------------------------------------------------------------------
 
 class _DefaultEmptyWidget extends StatelessWidget {
   final DataTablePlusTheme theme;

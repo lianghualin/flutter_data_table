@@ -965,7 +965,7 @@ class _FullDemoTabState extends State<FullDemoTab>
       ColumnDefinition<User>(
         label: 'ID',
         description: 'Unique user identifier',
-        flex: 1,
+        size: const ColumnSize.auto(),
         cellBuilder: TextCellBuilder.monospace<User>((u) => u.id),
       ),
       ColumnDefinition<User>(
@@ -989,25 +989,25 @@ class _FullDemoTabState extends State<FullDemoTab>
       ColumnDefinition<User>(
         label: 'Dept',
         description: 'Organizational department',
-        flex: 1,
+        size: const ColumnSize.auto(),
         cellBuilder: TextCellBuilder.text<User>((u) => u.department),
       ),
       ColumnDefinition<User>(
         label: 'Role',
         description: 'Permission level',
-        flex: 1,
+        size: const ColumnSize.auto(),
         cellBuilder: (user) => buildRoleBadge(user.role),
       ),
       ColumnDefinition<User>(
         label: 'Status',
         description: 'Account status',
-        flex: 1,
+        size: const ColumnSize.auto(),
         cellBuilder: (user) => buildStatusBadge(user.status),
       ),
       ColumnDefinition<User>(
         label: 'Created',
         description: 'Account creation date',
-        flex: 1,
+        size: const ColumnSize.auto(),
         cellBuilder: TextCellBuilder.text<User>((u) => u.formattedCreatedAt),
       ),
       ColumnDefinition<User>(
@@ -1019,7 +1019,7 @@ class _FullDemoTabState extends State<FullDemoTab>
       ColumnDefinition<User>(
         label: 'Logins',
         description: 'Total login count',
-        flex: 1,
+        size: const ColumnSize.auto(),
         cellBuilder: TextCellBuilder.monospace<User>(
           (u) => u.loginCount.toString(),
         ),
@@ -1027,7 +1027,7 @@ class _FullDemoTabState extends State<FullDemoTab>
       ColumnDefinition<User>(
         label: 'Score',
         description: 'Performance score (0-100)',
-        flex: 1,
+        size: const ColumnSize.auto(),
         cellBuilder: (user) => buildScoreIndicator(user.score),
       ),
     ];
@@ -2728,7 +2728,7 @@ class _ContextBarTabState extends State<ContextBarTab>
                             columns: [
                               ColumnDefinition<User>(
                                 label: 'ID',
-                                flex: 1,
+                                size: const ColumnSize.auto(),
                                 cellBuilder: TextCellBuilder.monospace<User>(
                                   (u) => u.id,
                                 ),
@@ -2752,7 +2752,7 @@ class _ContextBarTabState extends State<ContextBarTab>
                               ),
                               ColumnDefinition<User>(
                                 label: 'Status',
-                                flex: 1,
+                                size: const ColumnSize.auto(),
                                 cellBuilder: (u) =>
                                     buildStatusBadge(u.status),
                               ),
