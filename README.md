@@ -2,7 +2,7 @@
 
 A highly customizable, composable data table widget for Flutter. Built with a modular architecture — use the full table or pick individual components like filters, pagination, badges, and selection bars.
 
-![Demo](example.gif)
+![Demo](https://raw.githubusercontent.com/lianghualin/flutter_data_table/main/example.gif)
 
 ## Features
 
@@ -23,7 +23,7 @@ Add to your `pubspec.yaml`:
 dependencies:
   data_table_plus:
     git:
-      url: https://github.com/example/data_table_plus.git
+      url: https://github.com/lianghualin/flutter_data_table.git
 ```
 
 Then run:
@@ -353,7 +353,7 @@ flutter run -d chrome
 
 ## Requirements
 
-- Dart SDK: ^3.10.7
+- Dart SDK: ^3.0.0
 - Flutter: >=1.17.0
 
 ## License

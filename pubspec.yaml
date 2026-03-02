@@ -1,9 +1,9 @@
 name: data_table_plus
 description: "A customizable data table widget for Flutter with selection, pagination, status badges, and theming support."
 version: 0.1.0
-homepage: https://github.com/example/data_table_plus
-repository: https://github.com/example/data_table_plus
-issue_tracker: https://github.com/example/data_table_plus/issues
+homepage: https://github.com/lianghualin/flutter_data_table
+repository: https://github.com/lianghualin/flutter_data_table
+issue_tracker: https://github.com/lianghualin/flutter_data_table/issues
 
 topics:
   - table
@@ -12,7 +12,7 @@ topics:
   - ui
 
 environment:
-  sdk: ^3.10.7
+  sdk: ^3.0.0
   flutter: ">=1.17.0"
 
 dependencies:
