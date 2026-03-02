@@ -30,7 +30,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  data_table_plus:
+  advanced_data_table:
     path: ../
   cupertino_icons: ^1.0.8
 

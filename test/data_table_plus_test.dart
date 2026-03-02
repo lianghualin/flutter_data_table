@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:data_table_plus/data_table_plus.dart';
+import 'package:advanced_data_table/advanced_data_table.dart';
 
 void main() {
   group('DataTablePlusTheme', () {

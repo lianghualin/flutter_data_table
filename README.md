@@ -1,4 +1,4 @@
-# DataTablePlus
+# AdvancedDataTable
 
 A highly customizable, composable data table widget for Flutter. Built with a modular architecture — use the full table or pick individual components like filters, pagination, badges, and selection bars.
 
@@ -21,9 +21,7 @@ Add to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  data_table_plus:
-    git:
-      url: https://github.com/lianghualin/flutter_data_table.git
+  advanced_data_table: ^0.1.0
 ```
 
 Then run:
@@ -35,7 +33,7 @@ flutter pub get
 ## Quick Start
 
 ```dart
-import 'package:data_table_plus/data_table_plus.dart';
+import 'package:advanced_data_table/advanced_data_table.dart';
 ```
 
 ### Basic Table
