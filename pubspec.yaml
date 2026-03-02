@@ -1,4 +1,4 @@
-name: advanced_data_table
+name: composable_data_table
 description: "A customizable data table widget for Flutter with selection, pagination, status badges, and theming support."
 version: 0.1.0
 homepage: https://github.com/lianghualin/flutter_data_table

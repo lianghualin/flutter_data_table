@@ -1,4 +1,4 @@
-# AdvancedDataTable
+# ComposableDataTable
 
 A highly customizable, composable data table widget for Flutter. Built with a modular architecture — use the full table or pick individual components like filters, pagination, badges, and selection bars.
 
@@ -21,7 +21,7 @@ Add to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  advanced_data_table: ^0.1.0
+  composable_data_table: ^0.1.0
 ```
 
 Then run:
@@ -33,7 +33,7 @@ flutter pub get
 ## Quick Start
 
 ```dart
-import 'package:advanced_data_table/advanced_data_table.dart';
+import 'package:composable_data_table/composable_data_table.dart';
 ```
 
 ### Basic Table
