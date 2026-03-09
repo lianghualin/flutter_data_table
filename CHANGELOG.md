@@ -1,3 +1,10 @@
+## 0.1.1
+
+- `FilterDropdown` — added optional `label` parameter for persistent inline label prefix (e.g., `Status: All`)
+- `FilterSearchField` — added `keyboardType` and `textInputAction` passthrough parameters
+- `FilterDateRangePicker` — replaced Flutter's `showDatePicker` with `modern_date_picker` package; added `showTimePicker` parameter for date+time selection
+- Added `modern_date_picker` dependency
+
 ## 0.2.0
 
 - `TableContextualBar` — toolbar container that swaps between a custom normal toolbar and a contextual action bar based on selection state

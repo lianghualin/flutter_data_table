@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:modern_date_picker/modern_date_picker.dart';
 import '../theme/table_theme.dart';
 
 /// A configurable two-row filter toolbar widget.
@@ -204,6 +205,12 @@ class FilterSearchField extends StatelessWidget {
   /// Optional text editing controller.
   final TextEditingController? controller;
 
+  /// Keyboard type for the text field (e.g., TextInputType.number).
+  final TextInputType? keyboardType;
+
+  /// Optional input action for the keyboard (e.g., TextInputAction.search).
+  final TextInputAction? textInputAction;
+
   const FilterSearchField({
     super.key,
     this.value = '',
@@ -212,6 +219,8 @@ class FilterSearchField extends StatelessWidget {
     this.width = 280,
     this.height = 40,
     this.controller,
+    this.keyboardType,
+    this.textInputAction,
   });
 
   @override
@@ -224,6 +233,8 @@ class FilterSearchField extends StatelessWidget {
       child: TextField(
         controller: controller,
         onChanged: onChanged,
+        keyboardType: keyboardType,
+        textInputAction: textInputAction,
         style: TextStyle(fontSize: 13, color: theme.textPrimaryColor),
         decoration: InputDecoration(
           hintText: hint,
@@ -258,6 +269,9 @@ class FilterDropdown<T> extends StatelessWidget {
   /// Placeholder text when no value is selected.
   final String hint;
 
+  /// Optional persistent label prefix displayed inside the container (e.g., "Status: ").
+  final String? label;
+
   /// Dropdown items.
   final List<DropdownMenuItem<T>> items;
 
@@ -271,6 +285,7 @@ class FilterDropdown<T> extends StatelessWidget {
     super.key,
     required this.value,
     required this.hint,
+    this.label,
     required this.items,
     required this.onChanged,
     this.height = 40,
@@ -288,26 +303,40 @@ class FilterDropdown<T> extends StatelessWidget {
         border: Border.all(color: theme.borderColor),
         borderRadius: BorderRadius.circular(theme.borderRadiusSmall),
       ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<T>(
-          value: value,
-          hint: Text(
-            hint,
-            style: TextStyle(
-              fontSize: 13,
-              color: theme.textMutedColor,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (label != null)
+            Text(
+              '$label: ',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: theme.textSecondaryColor,
+              ),
+            ),
+          DropdownButtonHideUnderline(
+            child: DropdownButton<T>(
+              value: value,
+              hint: Text(
+                hint,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: theme.textMutedColor,
+                ),
+              ),
+              icon: Icon(
+                Icons.keyboard_arrow_down,
+                size: 18,
+                color: theme.textMutedColor,
+              ),
+              style: TextStyle(fontSize: 13, color: theme.textPrimaryColor),
+              dropdownColor: theme.backgroundColor,
+              items: items,
+              onChanged: onChanged,
             ),
           ),
-          icon: Icon(
-            Icons.keyboard_arrow_down,
-            size: 18,
-            color: theme.textMutedColor,
-          ),
-          style: TextStyle(fontSize: 13, color: theme.textPrimaryColor),
-          dropdownColor: theme.backgroundColor,
-          items: items,
-          onChanged: onChanged,
-        ),
+        ],
       ),
     );
   }
@@ -348,6 +377,9 @@ class FilterDateRangePicker extends StatelessWidget {
   /// Custom date formatter.
   final String Function(DateTime)? dateFormatter;
 
+  /// Whether to show the time picker alongside the date picker.
+  final bool showTimePicker;
+
   const FilterDateRangePicker({
     super.key,
     this.label,
@@ -361,6 +393,7 @@ class FilterDateRangePicker extends StatelessWidget {
     this.lastDate,
     this.height = 40,
     this.dateFormatter,
+    this.showTimePicker = false,
   });
 
   String _formatDate(DateTime date) {
@@ -369,7 +402,13 @@ class FilterDateRangePicker extends StatelessWidget {
       'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
     ];
-    return '${months[date.month - 1]} ${date.day}, ${date.year}';
+    final dateStr = '${months[date.month - 1]} ${date.day}, ${date.year}';
+    if (showTimePicker) {
+      final h = date.hour.toString().padLeft(2, '0');
+      final m = date.minute.toString().padLeft(2, '0');
+      return '$dateStr $h:$m';
+    }
+    return dateStr;
   }
 
   @override
@@ -559,24 +598,21 @@ class FilterDateRangePicker extends StatelessWidget {
     required DateTime lastDate,
     required ValueChanged<DateTime?> onDateSelected,
   }) async {
-    final date = await showDatePicker(
+    final brightness = Theme.of(context).brightness;
+    final pickerTheme = CustomDatePickerTheme.fromBrightness(brightness).copyWith(
+      accentColor: theme.accentColor,
+      backgroundColor: theme.backgroundColor,
+      textColor: theme.textPrimaryColor,
+      mutedColor: theme.textMutedColor,
+    );
+
+    final date = await CustomDatePickerDialog.show(
       context: context,
       initialDate: initialDate,
       firstDate: firstDate,
       lastDate: lastDate,
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: theme.accentColor,
-              onPrimary: Colors.white,
-              surface: theme.backgroundColor,
-              onSurface: theme.textPrimaryColor,
-            ),
-          ),
-          child: child!,
-        );
-      },
+      theme: pickerTheme,
+      showTimePicker: showTimePicker,
     );
     if (date != null) {
       onDateSelected(date);

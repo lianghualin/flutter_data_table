@@ -1,6 +1,6 @@
 name: composable_data_table
 description: "A customizable data table widget for Flutter with selection, pagination, status badges, and theming support."
-version: 0.1.0
+version: 0.1.1
 homepage: https://github.com/lianghualin/flutter_data_table
 repository: https://github.com/lianghualin/flutter_data_table
 issue_tracker: https://github.com/lianghualin/flutter_data_table/issues
@@ -18,6 +18,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  modern_date_picker: ^0.1.0
 
 dev_dependencies:
   flutter_test:

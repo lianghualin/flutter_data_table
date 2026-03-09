@@ -138,6 +138,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.17.0"
+  modern_date_picker:
+    dependency: transitive
+    description:
+      name: modern_date_picker
+      sha256: "78ac7f43eab08d8fe1731a62f5d519d2cb1799d0758029cd6a179e933c974388"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.1.0"
   path:
     dependency: transitive
     description:

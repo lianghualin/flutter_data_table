@@ -823,9 +823,10 @@ class _FullDemoTabState extends State<FullDemoTab>
         ),
         FilterDropdown<UserStatus?>(
           value: _statusFilter,
-          hint: 'All Status',
+          label: 'Status',
+          hint: 'All',
           items: [
-            const DropdownMenuItem(value: null, child: Text('All Status')),
+            const DropdownMenuItem(value: null, child: Text('All')),
             ...UserStatus.values.map(
               (s) => DropdownMenuItem(
                 value: s,
@@ -846,6 +847,7 @@ class _FullDemoTabState extends State<FullDemoTab>
           label: 'Created',
           fromDate: _createdFromDate,
           toDate: _createdToDate,
+          showTimePicker: true,
           onFromDateChanged: (date) {
             setState(() {
               _createdFromDate = date;
@@ -863,6 +865,7 @@ class _FullDemoTabState extends State<FullDemoTab>
           label: 'Last Login',
           fromDate: _lastLoginFromDate,
           toDate: _lastLoginToDate,
+          showTimePicker: true,
           onFromDateChanged: (date) {
             setState(() {
               _lastLoginFromDate = date;
@@ -905,9 +908,10 @@ class _FullDemoTabState extends State<FullDemoTab>
       advancedFilters: [
         FilterDropdown<UserRole?>(
           value: _roleFilter,
-          hint: 'All Roles',
+          label: 'Role',
+          hint: 'All',
           items: [
-            const DropdownMenuItem(value: null, child: Text('All Roles')),
+            const DropdownMenuItem(value: null, child: Text('All')),
             ...UserRole.values.map(
               (r) => DropdownMenuItem(
                 value: r,
@@ -926,11 +930,12 @@ class _FullDemoTabState extends State<FullDemoTab>
         ),
         FilterDropdown<String?>(
           value: _departmentFilter,
-          hint: 'All Departments',
+          label: 'Dept',
+          hint: 'All',
           items: [
             const DropdownMenuItem(
               value: null,
-              child: Text('All Departments'),
+              child: Text('All'),
             ),
             ...[
               'Engineering', 'Marketing', 'Sales', 'Finance', 'HR',
@@ -1660,6 +1665,14 @@ class _FiltersTabState extends State<FiltersTab>
                     hint: 'Search users, emails, IDs...',
                     onChanged: (v) => setState(() => _searchValue = v),
                   ),
+                  const SizedBox(height: 12),
+                  FilterSearchField(
+                    hint: 'Port number...',
+                    width: 180,
+                    keyboardType: TextInputType.number,
+                    textInputAction: TextInputAction.search,
+                    onChanged: (_) {},
+                  ),
                   const SizedBox(height: 8),
                   Text(
                     'Current value: "${_searchValue.isEmpty ? '(empty)' : _searchValue}"',
@@ -1676,7 +1689,7 @@ class _FiltersTabState extends State<FiltersTab>
             // FilterDropdown
             buildSectionCard(
               title: 'FilterDropdown',
-              subtitle: 'Styled dropdown selector with border and icon',
+              subtitle: 'Styled dropdown selector with optional inline label prefix',
               isDark: widget.isDark,
               child: Wrap(
                 spacing: 12,
@@ -1690,6 +1703,21 @@ class _FiltersTabState extends State<FiltersTab>
                       const DropdownMenuItem(
                         value: null,
                         child: Text('All Status'),
+                      ),
+                      ...['Active', 'Inactive', 'Pending', 'Suspended'].map(
+                        (s) => DropdownMenuItem(value: s, child: Text(s)),
+                      ),
+                    ],
+                    onChanged: (v) => setState(() => _dropdownValue = v),
+                  ),
+                  FilterDropdown<String?>(
+                    value: _dropdownValue,
+                    label: 'Status',
+                    hint: 'All',
+                    items: [
+                      const DropdownMenuItem(
+                        value: null,
+                        child: Text('All'),
                       ),
                       ...['Active', 'Inactive', 'Pending', 'Suspended'].map(
                         (s) => DropdownMenuItem(value: s, child: Text(s)),
@@ -1734,6 +1762,15 @@ class _FiltersTabState extends State<FiltersTab>
                         toDate: _toDate,
                         fromPlaceholder: 'From',
                         toPlaceholder: 'To',
+                        onFromDateChanged: (d) =>
+                            setState(() => _fromDate = d),
+                        onToDateChanged: (d) => setState(() => _toDate = d),
+                      ),
+                      FilterDateRangePicker(
+                        label: 'With time',
+                        fromDate: _fromDate,
+                        toDate: _toDate,
+                        showTimePicker: true,
                         onFromDateChanged: (d) =>
                             setState(() => _fromDate = d),
                         onToDateChanged: (d) => setState(() => _toDate = d),
